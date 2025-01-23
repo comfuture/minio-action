@@ -8,6 +8,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio
+      AWS_S3_BUCKET: testbucket
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_EC2_METADATA_DISABLED: true
     steps:
       - uses: actions/checkout@v4
       - name: Test MinIO Action
