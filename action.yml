@@ -1,0 +1,29 @@
+name: MinIO Action
+description: Runs MinIO server in a GitHub workflow
+author: Changkyun Kim
+branding:
+  icon: upload-cloud
+  color: blue
+inputs:
+  access_key:
+    description: Access key ID for MinIO server
+    required: true
+    default: minio
+  secret_key:
+    description: Secret access key for MinIO server
+    required: true
+    default: minio
+  port:
+    description: Port number for MinIO server
+    required: false
+    default: '9000'
+  bucket_name:
+    description: Create a bucket with the given name
+    required: false
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    MINIO_ACCESS_KEY: ${{ inputs.access_key }}
+    MINIO_SECRET_KEY: ${{ inputs.secret_key }}
+    BUCKET_NAME: ${{ inputs.bucket_name }}

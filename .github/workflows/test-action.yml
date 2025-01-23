@@ -1,0 +1,29 @@
+name: Test MinIO Action
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test MinIO Action
+        uses: .
+        with:
+          access_key: minio
+          secret_key: minio
+          port: 9000
+          bucket_name: test-bucket
+      - name: Test Create File
+        run: |
+          echo "Hello World" > hello.txt
+          aws s3 --endpoint-url http://127.0.0.1:9000 cp hello.txt s3://testbucket/hello.txt
+      - name: Test List Files
+        run: |
+          aws s3 --endpoint-url http://127.0.0.1:9000 ls s3://testbucket
+      - name: Test Delete File
+        run: |
+          aws s3 --endpoint-url http://127.0.0.1:9000 rm s3://testbucket/hello.txt
