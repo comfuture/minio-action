@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: minio
-      AWS_SECRET_ACCESS_KEY: minio
+      AWS_SECRET_ACCESS_KEY: miniotest
       AWS_S3_BUCKET: testbucket
       AWS_S3_ENDPOINT: http://minio:9000
       AWS_EC2_METADATA_DISABLED: true
@@ -19,8 +19,8 @@ jobs:
       - name: Test MinIO Action
         uses: ./
         with:
-          access_key: minio
-          secret_key: minio
+          access_key: ${{ env.AWS_ACCESS_KEY_ID }}
+          secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           port: 9000
           bucket_name: testbucket
       - name: Test Create File
