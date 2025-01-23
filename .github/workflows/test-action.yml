@@ -16,7 +16,7 @@ jobs:
           access_key: minio
           secret_key: minio
           port: 9000
-          bucket_name: test-bucket
+          bucket_name: testbucket
       - name: Test Create File
         run: |
           echo "Hello World" > hello.txt
