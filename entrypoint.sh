@@ -8,7 +8,7 @@ if [ -n "$BUCKET_NAME" ]; then
   sleep 5
   
   # Configure the mc client
-  mc alias set myminio http://127.0.0.1:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
+  mc alias set myminio http://127.0.0.1:$PORT $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
   
   # Create a bucket
   mc mb myminio/$BUCKET_NAME

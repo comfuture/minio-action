@@ -27,3 +27,4 @@ runs:
     MINIO_ACCESS_KEY: ${{ inputs.access_key }}
     MINIO_SECRET_KEY: ${{ inputs.secret_key }}
     BUCKET_NAME: ${{ inputs.bucket_name }}
+    PORT: ${{ inputs.port }}
