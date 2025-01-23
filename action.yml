@@ -29,9 +29,10 @@ runs:
   image: Dockerfile
   entrypoint: /entrypoint.sh
   post-entrypoint: |
-    echo "Creating bucket $BUCKET_NAME"
-    export AWS_ACCESS_KEY_ID=${{ inputs.access_key }}
-    export AWS_SECRET_ACCESS_KEY=${{ inputs.secret_key }}
-    export AWS_EC2_METADATA_DISABLED=true
-    aws --endpoint-url http://127.0.0.1:$PORT s3 mb s3://$BUCKET_NAME
-  post-if: ${{ inputs.bucket_name != '' }}
+    if [ -n "$BUCKET_NAME" ]; then
+      echo "Creating bucket $BUCKET_NAME"
+      export AWS_ACCESS_KEY_ID=$MINIO_ACCESS_KEY
+      export AWS_SECRET_ACCESS_KEY=$MINIO_SECRET_KEY
+      export AWS_EC2_METADATA_DISABLED=true
+      aws --endpoint-url http://127.0.0.1:$PORT s3 mb s3://$BUCKET_NAME
+    fi
