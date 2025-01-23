@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test MinIO Action
-        uses: .
+        uses: ./
         with:
           access_key: minio
           secret_key: minio
