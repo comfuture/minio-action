@@ -16,15 +16,29 @@ inputs:
   port:
     description: Port number for MinIO server
     required: false
-    default: '9000'
+    default: "9000"
   bucket_name:
     description: Create a bucket with the given name
     required: false
+    default: ""
 runs:
-  env:
-    MINIO_ACCESS_KEY: ${{ inputs.access_key }}
-    MINIO_SECRET_KEY: ${{ inputs.secret_key }}
-    BUCKET_NAME: ${{ inputs.bucket_name }}
-    PORT: ${{ inputs.port }}
-  using: docker
-  image: Dockerfile
+  using: composite
+  steps:
+    - name: Setup minio
+      shell: bash
+      run: |
+        docker run -d -p ${{ inputs.port }}:9000 --name minio 
+                  -e "MINIO_ACCESS_KEY=${{ inputs.access_key }}" 
+                  -e "MINIO_SECRET_KEY=${{ inputs.secret_key }}" 
+                  -v /tmp/data:/data
+                  -v /tmp/config:/root/.minio
+                  minio/minio server /data
+        export AWS_ACCESS_KEY_ID=${{ inputs.access_key }}
+        export AWS_SECRET_ACCESS_KEY=${{ inputs.secret_key }}
+        export AWS_EC2_METADATA_DISABLED=true
+
+    - name: Create bucket
+      shell: bash
+      if: ${{ inputs.bucket_name != '' }}
+      run: |
+        aws --endpoint-url http://127.0.0.1:${{ inputs.port }}/ s3 mb s3://${{ inputs.bucket_name }}
