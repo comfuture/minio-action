@@ -12,7 +12,7 @@ inputs:
   secret_key:
     description: Secret access key for MinIO server
     required: true
-    default: minio
+    default: miniotest
   port:
     description: Port number for MinIO server
     required: false
