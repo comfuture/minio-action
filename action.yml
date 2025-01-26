@@ -1,4 +1,4 @@
-name: MinIO Action
+name: MinIO Test Action
 description: Runs MinIO server in a GitHub workflow
 author: Changkyun Kim
 branding:
