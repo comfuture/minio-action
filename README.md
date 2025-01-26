@@ -11,7 +11,7 @@ You can use this action to test your S3 integration in your GitHub Actions workf
 | `access_key` | Access key ID for MinIO server | Yes | `minio` |
 | `secret_key` | Secret access key for MinIO server | Yes | `miniotest` |
 | `port` | Port number for MinIO server | No | `9000` |
-| `bucket_name` | Create a bucket with the given name | No | `""` |
+| `bucket_name` | Create a bucket with the given name | No | |
 
 If you set `bucket_name`, the action will create a bucket with the given name.
 
@@ -53,65 +53,107 @@ aws --endpoint-url http://127.0.0.1:9000 s3 ls
 
 ## Using with boto3
 
-You can use boto3 with MinIO server by setting the endpoint URL:
+You can use boto3 with MinIO server by setting the endpoint URL.
+
+Here's how to set up a pytest fixture for MinIO testing:
 
 ```python
+import pytest
 import boto3
 from botocore.client import Config
 
-# Initialize a session using MinIO server
-s3 = boto3.resource(
-  's3',
-  endpoint_url='http://127.0.0.1:9000',
-  aws_access_key_id='minio',
-  aws_secret_access_key='minio123',
-  config=Config(signature_version='s3v4')
-)
+@pytest.fixture
+def s3client():
+    """Fixture for S3 client connected to MinIO"""
+    return boto3.client(
+        's3',
+        endpoint_url='http://127.0.0.1:9000',
+        aws_access_key_id='minio',
+        aws_secret_access_key='minio123',
+        config=Config(signature_version='s3v4')
+    )
 
-# Create a new bucket
-s3.create_bucket(Bucket='my-test-bucket')
+@pytest.fixture
+def test_bucket(s3client):
+    """Fixture that creates and tears down a test bucket"""
+    bucket_name = 'test-bucket'
+    s3client.create_bucket(Bucket=bucket_name)
+    yield bucket_name
+    # Cleanup: delete all objects and the bucket after test
+    try:
+        s3client.delete_bucket(Bucket=bucket_name)
+    except Exception as e:
+        print(f"Cleanup error: {e}")
 
-# List all buckets
-for bucket in s3.buckets.all():
-  print(bucket.name)
-
-# Upload a new file
-s3.Bucket('my-test-bucket').upload_file('test.txt', 'test.txt')
+def test_file_upload(s3client, test_bucket):
+    """Test file upload functionality"""
+    # Upload test file
+    s3client.put_object(
+        Bucket=test_bucket,
+        Key='test.txt',
+        Body='test content'
+    )
+    
+    # Verify upload
+    response = s3client.get_object(Bucket=test_bucket, Key='test.txt')
+    assert response['Body'].read().decode() == 'test content'
 ```
 
 ## Using with Node.js (TypeScript)
 
-You can use the `aws-sdk` package to interact with MinIO server in a Node.js (TypeScript) application:
+You can use the `aws-sdk` package to interact with MinIO server in a Node.js (TypeScript) application.
+
+Example of setting up S3 client for Jest testing:
 
 ```typescript
-import AWS from 'aws-sdk';
+import { S3 } from 'aws-sdk';
 
-// Configure the AWS SDK with MinIO server details
-const s3 = new AWS.S3({
-  endpoint: 'http://127.0.0.1:9000',
-  accessKeyId: 'minio',
-  secretAccessKey: 'minio123',
-  s3ForcePathStyle: true, // needed with minio
-  signatureVersion: 'v4'
-});
+describe('S3 Operations', () => {
+    let s3Client: S3;
+    const TEST_BUCKET = 'test-bucket';
 
-// Create a new bucket
-s3.createBucket({ Bucket: 'my-test-bucket' }, (err, data) => {
-  if (err) console.log(err, err.stack);
-  else console.log('Bucket Created Successfully', data.Location);
-});
+    beforeAll(async () => {
+        s3Client = new S3({
+            endpoint: 'http://127.0.0.1:9000',
+            accessKeyId: 'minio',
+            secretAccessKey: 'minio123',
+            s3ForcePathStyle: true,
+            signatureVersion: 'v4'
+        });
 
-// List all buckets
-s3.listBuckets((err, data) => {
-  if (err) console.log(err, err.stack);
-  else console.log('Bucket List', data.Buckets);
-});
+        // Create test bucket
+        await s3Client.createBucket({ Bucket: TEST_BUCKET }).promise();
+    });
 
-// Upload a new file
-const uploadParams = { Bucket: 'my-test-bucket', Key: 'test.txt', Body: 'Hello from MinIO!' };
-s3.upload(uploadParams, (err, data) => {
-  if (err) console.log(err, err.stack);
-  else console.log('File Uploaded Successfully', data.Location);
+    afterAll(async () => {
+        // Clean up: delete all objects and bucket
+        try {
+            await s3Client.deleteBucket({ Bucket: TEST_BUCKET }).promise();
+        } catch (error) {
+            console.error('Cleanup error:', error);
+        }
+    });
+
+    test('should upload and retrieve file', async () => {
+        // Upload test file
+        await s3Client
+            .putObject({
+                Bucket: TEST_BUCKET,
+                Key: 'test.txt',
+                Body: 'test content'
+            })
+            .promise();
+
+        // Retrieve and verify
+        const response = await s3Client
+            .getObject({
+                Bucket: TEST_BUCKET,
+                Key: 'test.txt'
+            })
+            .promise();
+
+        expect(response.Body?.toString()).toBe('test content');
+    });
 });
 ```
 
