@@ -1,4 +1,4 @@
-name: Silo Test Action
+name: Silo Action
 description: Runs a Silo S3-compatible object storage server in a GitHub workflow
 author: Changkyun Kim
 branding:
