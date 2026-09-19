@@ -1,6 +1,7 @@
-name: Test MinIO Action
+name: Test Silo Action
 
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -9,27 +10,34 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      AWS_ACCESS_KEY_ID: minio
-      AWS_SECRET_ACCESS_KEY: miniotest
-      AWS_S3_BUCKET: testbucket
-      AWS_S3_ENDPOINT: http://minio:9000
-      AWS_EC2_METADATA_DISABLED: true
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniotest
+      SILO_PORT: "9000"
+      SILO_BUCKET: testbucket
     steps:
       - uses: actions/checkout@v4
-      - name: Test MinIO Action
+      - name: Test Silo Action
         uses: ./
         with:
-          access_key: ${{ env.AWS_ACCESS_KEY_ID }}
-          secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          port: 9000
-          bucket_name: testbucket
+          access_key: ${{ env.MINIO_ROOT_USER }}
+          secret_key: ${{ env.MINIO_ROOT_PASSWORD }}
+          port: ${{ env.SILO_PORT }}
+          bucket_name: ${{ env.SILO_BUCKET }}
+      - name: Verify exported credentials
+        run: |
+          test "${AWS_ACCESS_KEY_ID}" = "${MINIO_ROOT_USER}"
+          test "${AWS_SECRET_ACCESS_KEY}" = "${MINIO_ROOT_PASSWORD}"
+          test "${AWS_EC2_METADATA_DISABLED}" = "true"
       - name: Test Create File
         run: |
           echo "Hello World" > hello.txt
-          aws s3 --endpoint-url http://127.0.0.1:9000 cp hello.txt s3://testbucket/hello.txt
+          aws s3 --endpoint-url "http://127.0.0.1:${SILO_PORT}" \
+            cp hello.txt "s3://${SILO_BUCKET}/hello.txt"
       - name: Test List Files
         run: |
-          aws s3 --endpoint-url http://127.0.0.1:9000 ls s3://testbucket
+          aws s3 --endpoint-url "http://127.0.0.1:${SILO_PORT}" \
+            ls "s3://${SILO_BUCKET}"
       - name: Test Delete File
         run: |
-          aws s3 --endpoint-url http://127.0.0.1:9000 rm s3://testbucket/hello.txt
+          aws s3 --endpoint-url "http://127.0.0.1:${SILO_PORT}" \
+            rm "s3://${SILO_BUCKET}/hello.txt"
